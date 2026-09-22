@@ -1,0 +1,6 @@
+{
+  "name": "UGMS — UniGrova Management System",
+  "description": "Enterprise management and executive administration platform for UniGrova.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

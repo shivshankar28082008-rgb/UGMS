@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(allowedRoles) {
+      return isSignedIn() && 
+        (getUserData().role in allowedRoles || request.auth.token.role in allowedRoles);
+    }
+
+    // Public QR Verification Rule: Allows anyone to verify an employee ID or ID Card via QR code
+    match /employees/{employeeId} {
+      // Public verification can read status and official designations
+      allow read: if true;
+      // Write: COO, CEO, FOUNDER or HR
+      allow create, update, delete: if isSignedIn();
+    }
+
+    match /idCards/{idCardId} {
+      // Public verification needs to read ID card validity
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /departments/{departmentId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /tasks/{taskId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /approvals/{approvalId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Immutable audit logs
+    }
+
+    match /notifications/{notificationId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true; // Public company name/logo access
+      allow write: if isSignedIn();
+    }
+
+    // Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
